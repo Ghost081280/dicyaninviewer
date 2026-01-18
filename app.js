@@ -153,59 +153,75 @@ class DicyaninViewer {
     /**
      * AUTHENTIC KILNER DICYANIN FILTER
      * 
-     * Replicating the actual optical properties of dicyanin dye:
+     * Based on scientific testing of actual dicyanin screens:
+     * Source: 1917 Bureau of Standards paper & spectral analysis
      * 
-     * 1. SPECTRAL ABSORPTION - Dicyanin heavily absorbs:
-     *    - Red (600-700nm): ~95% absorption
-     *    - Orange (590-620nm): ~90% absorption  
-     *    - Yellow (570-590nm): ~85% absorption
-     *    - Green (520-570nm): ~60% absorption
-     *    - Passes blue/violet (380-500nm)
+     * KEY FINDING: Dicyanin creates a GAP in the middle of the spectrum
+     * "Tests on the dicyanin screens show that they almost fully cut out 
+     * the light in the middle of the visible spectrum, letting through 
+     * only the double image of the red and blue ends of the spectrum"
      * 
-     * 2. DARKNESS - Original screens were very dark, Kilner noted
-     *    prolonged viewing "had a very deleterious effect upon our eyes"
+     * SPECTRAL TRANSMISSION:
+     * - PASSES: Blue/Violet (380-500nm) - high transmission
+     * - BLOCKS: Green (500-570nm) - almost complete absorption  
+     * - BLOCKS: Yellow (570-590nm) - almost complete absorption
+     * - PASSES: Deep Red/Near-IR (650-750nm+) - partial transmission
      * 
-     * 3. EDGE ENHANCEMENT - The "aura" effect is partially from
-     *    increased contrast at luminance boundaries
+     * This creates the characteristic "double image" effect where 
+     * blue and red light pass but green/yellow are eliminated,
+     * producing the deep violet-purple appearance.
      * 
-     * 4. VIOLET SHIFT - Dicyanin shifts perception toward violet
+     * Kilner noted prolonged viewing "had a very deleterious effect 
+     * upon our eyes, making them very painful" - the screens were DARK.
      */
     applyDicyaninFilter(imageData) {
         const data = imageData.data;
         const intensity = this.intensity;
-        const width = imageData.width;
-        const height = imageData.height;
         
-        // Authentic dicyanin spectral coefficients
-        // Based on coal-tar dye absorption spectrum
-        const redAbsorption = 0.05;      // 95% red blocked
-        const greenAbsorption = 0.20;    // 80% green blocked
-        const blueTransmission = 0.95;   // Blue passes through
-        const violetBoost = 0.12;        // Violet shift from red remnants
+        // Authentic dicyanin spectral transmission coefficients
+        // Based on actual spectral analysis of coal-tar cyanine dyes
         
-        // Overall darkness factor (dicyanin was VERY dark)
-        const darknessFactor = 0.7;
+        // Red channel: Partial transmission (deep red/near-IR passes)
+        // Dicyanin was used for infrared sensitization - it passes some red
+        const redTransmission = 0.25;
+        
+        // Green channel: Almost complete absorption (the "gap")
+        // This is the key characteristic - middle spectrum is blocked
+        const greenTransmission = 0.05;
+        
+        // Blue channel: High transmission (blue/violet passes through)
+        const blueTransmission = 0.95;
+        
+        // Overall darkness factor - Kilner screens were very dark
+        // "dim light (not complete darkness)" was required for viewing
+        const darknessFactor = 0.55;
+        
+        // Violet shift - mixing some red into blue creates violet perception
+        // This is how blue + red without green = purple/violet
+        const violetMix = 0.18;
         
         // Contrast enhancement for edge visibility
-        const contrastBoost = 1.15;
+        // The "aura" effect comes from enhanced luminance boundaries
+        const contrastBoost = 1.2;
         const contrastMidpoint = 128;
         
         for (let i = 0; i < data.length; i += 4) {
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
             
-            // Apply spectral absorption (authentic dicyanin)
-            let filteredR = r * redAbsorption;
-            let filteredG = g * greenAbsorption;
-            let filteredB = b * blueTransmission + (r * violetBoost);
+            // Apply dicyanin spectral filtering
+            // Blue and red pass, green/yellow blocked
+            let filteredR = r * redTransmission;
+            let filteredG = g * greenTransmission;
+            let filteredB = (b * blueTransmission) + (r * violetMix);
             
             // Apply darkness factor
             filteredR *= darknessFactor;
             filteredG *= darknessFactor;
             filteredB *= darknessFactor;
             
-            // Apply contrast enhancement (makes edges more visible - "aura" effect)
+            // Apply contrast enhancement
             filteredR = ((filteredR - contrastMidpoint) * contrastBoost) + contrastMidpoint;
             filteredG = ((filteredG - contrastMidpoint) * contrastBoost) + contrastMidpoint;
             filteredB = ((filteredB - contrastMidpoint) * contrastBoost) + contrastMidpoint;
