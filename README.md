@@ -1,11 +1,9 @@
 # Dicyanin Viewer
 
 [![Live Demo](https://img.shields.io/badge/🔴_LIVE-Try_Now-dc2626?style=for-the-badge)](https://ghost081280.github.io/dicyanin-viewer/)
-[![GitHub Pages](https://img.shields.io/badge/Hosted_on-GitHub_Pages-222?style=for-the-badge&logo=github)](https://ghost081280.github.io/dicyanin-viewer/)
 
 ![Version](https://img.shields.io/badge/version-2.0.0-8b7aff?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-4a3aff?style=flat-square)
+[![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
 ![Mobile Ready](https://img.shields.io/badge/mobile-ready-10b981?style=flat-square)
 
 ---
