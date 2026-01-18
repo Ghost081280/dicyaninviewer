@@ -1,7 +1,6 @@
 # Dicyanin Viewer
 
 [![Live Site](https://img.shields.io/badge/🔴_LIVE-Try_Now-dc2626?style=for-the-badge)](https://ghost081280.github.io/dicyanin-viewer/)
-[![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
 
 ---
 
