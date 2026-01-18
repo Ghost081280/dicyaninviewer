@@ -26,6 +26,7 @@ class DicyaninViewer {
         this.intensityValue = document.getElementById('intensity-value');
         this.flipBtn = document.getElementById('flip-btn');
         this.captureBtn = document.getElementById('capture-btn');
+        this.recordBtn = document.getElementById('record-btn');
         this.shareBtn = document.getElementById('share-btn');
         
         this.captureModal = document.getElementById('capture-modal');
@@ -39,13 +40,33 @@ class DicyaninViewer {
         this.topBar = document.getElementById('top-bar');
         this.infoBadge = this.topBar.querySelector('.info-badge');
         
+        // Recording elements
+        this.recordingIndicator = document.getElementById('recording-indicator');
+        this.recordingTime = document.getElementById('recording-time');
+        
+        // Video preview modal elements
+        this.videoModal = document.getElementById('video-modal');
+        this.videoPreview = document.getElementById('video-preview');
+        this.closeVideoModalBtn = document.getElementById('close-video-modal');
+        this.downloadVideoBtn = document.getElementById('download-video-btn');
+        this.shareVideoBtn = document.getElementById('share-video-btn');
+        
         // State
         this.stream = null;
         this.facingMode = 'environment';
-        this.intensity = 0.85; // Higher default for more authentic look
+        this.intensity = 0.85;
         this.isProcessing = false;
         this.animationId = null;
         this.filterEnabled = true;
+        
+        // Recording state
+        this.isRecording = false;
+        this.mediaRecorder = null;
+        this.recordedChunks = [];
+        this.recordingStartTime = null;
+        this.recordingTimerInterval = null;
+        this.maxRecordingDuration = 30000; // 30 seconds max
+        this.recordedBlob = null;
         
         // App URL for sharing
         this.appUrl = 'https://ghost081280.github.io/dicyanin-viewer/';
@@ -72,20 +93,29 @@ class DicyaninViewer {
         
         this.flipBtn.addEventListener('click', () => this.flipCamera());
         this.captureBtn.addEventListener('click', () => this.captureImage());
+        this.recordBtn.addEventListener('click', () => this.toggleRecording());
         this.shareBtn.addEventListener('click', () => this.shareToX());
         
         this.closeModalBtn.addEventListener('click', () => this.closeModal());
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
         this.shareCaptureBtn.addEventListener('click', () => this.shareImageToX());
         
+        // Video modal events
+        this.closeVideoModalBtn.addEventListener('click', () => this.closeVideoModal());
+        this.downloadVideoBtn.addEventListener('click', () => this.downloadVideo());
+        this.shareVideoBtn.addEventListener('click', () => this.shareVideo());
+        
         this.retryBtn.addEventListener('click', () => this.startCamera());
         
         // Tap canvas to toggle filter
         this.canvas.addEventListener('click', () => this.toggleFilter());
         
-        // Close modal on backdrop click
+        // Close modals on backdrop click
         this.captureModal.addEventListener('click', (e) => {
             if (e.target === this.captureModal) this.closeModal();
+        });
+        this.videoModal.addEventListener('click', (e) => {
+            if (e.target === this.videoModal) this.closeVideoModal();
         });
     }
     
@@ -178,30 +208,11 @@ class DicyaninViewer {
         const data = imageData.data;
         const intensity = this.intensity;
         
-        // Authentic dicyanin spectral transmission coefficients
-        // Based on actual spectral analysis of coal-tar cyanine dyes
-        
-        // Red channel: Partial transmission (deep red/near-IR passes)
-        // Dicyanin was used for infrared sensitization - it passes some red
         const redTransmission = 0.25;
-        
-        // Green channel: Almost complete absorption (the "gap")
-        // This is the key characteristic - middle spectrum is blocked
         const greenTransmission = 0.05;
-        
-        // Blue channel: High transmission (blue/violet passes through)
         const blueTransmission = 0.95;
-        
-        // Overall darkness factor - Kilner screens were very dark
-        // "dim light (not complete darkness)" was required for viewing
         const darknessFactor = 0.55;
-        
-        // Violet shift - mixing some red into blue creates violet perception
-        // This is how blue + red without green = purple/violet
         const violetMix = 0.18;
-        
-        // Contrast enhancement for edge visibility
-        // The "aura" effect comes from enhanced luminance boundaries
         const contrastBoost = 1.2;
         const contrastMidpoint = 128;
         
@@ -210,23 +221,18 @@ class DicyaninViewer {
             const g = data[i + 1];
             const b = data[i + 2];
             
-            // Apply dicyanin spectral filtering
-            // Blue and red pass, green/yellow blocked
             let filteredR = r * redTransmission;
             let filteredG = g * greenTransmission;
             let filteredB = (b * blueTransmission) + (r * violetMix);
             
-            // Apply darkness factor
             filteredR *= darknessFactor;
             filteredG *= darknessFactor;
             filteredB *= darknessFactor;
             
-            // Apply contrast enhancement
             filteredR = ((filteredR - contrastMidpoint) * contrastBoost) + contrastMidpoint;
             filteredG = ((filteredG - contrastMidpoint) * contrastBoost) + contrastMidpoint;
             filteredB = ((filteredB - contrastMidpoint) * contrastBoost) + contrastMidpoint;
             
-            // Blend with original based on intensity
             data[i] = Math.max(0, Math.min(255, r * (1 - intensity) + filteredR * intensity));
             data[i + 1] = Math.max(0, Math.min(255, g * (1 - intensity) + filteredG * intensity));
             data[i + 2] = Math.max(0, Math.min(255, b * (1 - intensity) + filteredB * intensity));
@@ -246,7 +252,54 @@ class DicyaninViewer {
             this.ctx.putImageData(filtered, 0, 0);
         }
         
+        // Add recording watermark if recording
+        if (this.isRecording) {
+            this.addLiveWatermark();
+        }
+        
         this.animationId = requestAnimationFrame(this.processFrame);
+    }
+    
+    /**
+     * Add watermark to live canvas during recording
+     */
+    addLiveWatermark() {
+        const ctx = this.ctx;
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        
+        // Top watermark bar
+        const topBarHeight = Math.max(40, height * 0.045);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, width, topBarHeight);
+        
+        // Top border glow
+        ctx.fillStyle = 'rgba(74, 58, 255, 0.6)';
+        ctx.fillRect(0, topBarHeight - 2, width, 2);
+        
+        // "DICYANIN FILTER ACTIVATED" text
+        const fontSize = Math.max(12, width / 50);
+        ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#8b7aff';
+        ctx.fillText('DICYANIN FILTER ACTIVATED', width / 2, topBarHeight / 2);
+        
+        // Bottom watermark bar
+        const bottomBarHeight = Math.max(35, height * 0.04);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, height - bottomBarHeight, width, bottomBarHeight);
+        
+        // Bottom border glow
+        ctx.fillStyle = 'rgba(74, 58, 255, 0.6)';
+        ctx.fillRect(0, height - bottomBarHeight, width, 2);
+        
+        // Website/branding
+        const smallFontSize = Math.max(10, width / 60);
+        ctx.font = `600 ${smallFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.textAlign = 'center';
+        ctx.fillText('ghost081280.github.io/dicyanin-viewer', width / 2, height - bottomBarHeight / 2);
     }
     
     toggleFilter() {
@@ -267,6 +320,8 @@ class DicyaninViewer {
         this.facingMode = this.facingMode === 'environment' ? 'user' : 'environment';
         await this.startCamera();
     }
+    
+    // ==================== IMAGE CAPTURE ====================
     
     captureImage() {
         this.captureCanvas.width = this.canvas.width;
@@ -357,13 +412,11 @@ class DicyaninViewer {
             
             const file = new File([blob], `dicyanin-scan-${Date.now()}.png`, { type: 'image/png' });
             
-            // On mobile, use share sheet which allows "Save Image" to camera roll
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     files: [file]
                 });
             } else {
-                // Desktop fallback - regular download
                 const link = document.createElement('a');
                 link.download = file.name;
                 link.href = URL.createObjectURL(blob);
@@ -372,7 +425,6 @@ class DicyaninViewer {
             }
         } catch (error) {
             if (error.name !== 'AbortError') {
-                // Final fallback
                 const link = document.createElement('a');
                 link.download = `dicyanin-scan-${Date.now()}.png`;
                 link.href = this.captureCanvas.toDataURL('image/png');
@@ -381,9 +433,219 @@ class DicyaninViewer {
         }
     }
     
-    /**
-     * Share app link directly to X (Twitter)
-     */
+    // ==================== VIDEO RECORDING ====================
+    
+    toggleRecording() {
+        if (this.isRecording) {
+            this.stopRecording();
+        } else {
+            this.startRecording();
+        }
+    }
+    
+    startRecording() {
+        try {
+            // Get canvas stream with audio disabled
+            const canvasStream = this.canvas.captureStream(30); // 30 FPS
+            
+            // Determine best supported format
+            const mimeType = this.getSupportedMimeType();
+            if (!mimeType) {
+                alert('Video recording is not supported on this browser.');
+                return;
+            }
+            
+            this.mediaRecorder = new MediaRecorder(canvasStream, {
+                mimeType: mimeType,
+                videoBitsPerSecond: 5000000 // 5 Mbps for quality
+            });
+            
+            this.recordedChunks = [];
+            
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.recordedChunks.push(event.data);
+                }
+            };
+            
+            this.mediaRecorder.onstop = () => {
+                this.processRecording();
+            };
+            
+            this.mediaRecorder.start(100); // Collect data every 100ms
+            this.isRecording = true;
+            this.recordingStartTime = Date.now();
+            
+            // Update UI
+            this.recordBtn.classList.add('recording');
+            this.recordBtn.querySelector('span').textContent = 'Stop';
+            this.recordingIndicator.classList.remove('hidden');
+            
+            // Start timer
+            this.updateRecordingTimer();
+            this.recordingTimerInterval = setInterval(() => {
+                this.updateRecordingTimer();
+            }, 100);
+            
+            // Auto-stop after max duration
+            setTimeout(() => {
+                if (this.isRecording) {
+                    this.stopRecording();
+                }
+            }, this.maxRecordingDuration);
+            
+        } catch (error) {
+            console.error('Recording error:', error);
+            alert('Failed to start recording. Please try again.');
+        }
+    }
+    
+    getSupportedMimeType() {
+        const types = [
+            'video/webm;codecs=vp9',
+            'video/webm;codecs=vp8',
+            'video/webm',
+            'video/mp4'
+        ];
+        
+        for (const type of types) {
+            if (MediaRecorder.isTypeSupported(type)) {
+                return type;
+            }
+        }
+        return null;
+    }
+    
+    stopRecording() {
+        if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop();
+            this.isRecording = false;
+            
+            // Update UI
+            this.recordBtn.classList.remove('recording');
+            this.recordBtn.querySelector('span').textContent = 'Record';
+            this.recordingIndicator.classList.add('hidden');
+            
+            // Stop timer
+            if (this.recordingTimerInterval) {
+                clearInterval(this.recordingTimerInterval);
+                this.recordingTimerInterval = null;
+            }
+        }
+    }
+    
+    updateRecordingTimer() {
+        if (!this.recordingStartTime) return;
+        
+        const elapsed = Date.now() - this.recordingStartTime;
+        const seconds = Math.floor(elapsed / 1000);
+        const ms = Math.floor((elapsed % 1000) / 100);
+        
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        
+        this.recordingTime.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms}`;
+        
+        // Check max duration
+        if (elapsed >= this.maxRecordingDuration) {
+            this.stopRecording();
+        }
+    }
+    
+    processRecording() {
+        const mimeType = this.getSupportedMimeType();
+        this.recordedBlob = new Blob(this.recordedChunks, { type: mimeType });
+        
+        // Create video preview URL
+        const videoUrl = URL.createObjectURL(this.recordedBlob);
+        this.videoPreview.src = videoUrl;
+        
+        // Show video modal
+        this.videoModal.classList.remove('hidden');
+    }
+    
+    closeVideoModal() {
+        this.videoModal.classList.add('hidden');
+        this.videoPreview.pause();
+        this.videoPreview.src = '';
+        
+        // Clean up blob
+        if (this.recordedBlob) {
+            URL.revokeObjectURL(this.videoPreview.src);
+        }
+    }
+    
+    async downloadVideo() {
+        if (!this.recordedBlob) return;
+        
+        try {
+            const extension = this.recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
+            const file = new File([this.recordedBlob], `dicyanin-scan-${Date.now()}.${extension}`, { 
+                type: this.recordedBlob.type 
+            });
+            
+            // On mobile, use share sheet which allows "Save Video" to camera roll
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file]
+                });
+            } else {
+                // Desktop fallback - regular download
+                const link = document.createElement('a');
+                link.download = file.name;
+                link.href = URL.createObjectURL(this.recordedBlob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                // Final fallback
+                const extension = this.recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
+                const link = document.createElement('a');
+                link.download = `dicyanin-scan-${Date.now()}.${extension}`;
+                link.href = URL.createObjectURL(this.recordedBlob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+        }
+    }
+    
+    async shareVideo() {
+        if (!this.recordedBlob) return;
+        
+        try {
+            const extension = this.recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
+            const file = new File([this.recordedBlob], `dicyanin-scan.${extension}`, { 
+                type: this.recordedBlob.type 
+            });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'Dicyanin Filter Scan',
+                    text: 'DICYANIN FILTER ACTIVATED - See what others cannot. What do you see? ' + this.appUrl
+                });
+            } else {
+                // Fallback: Download video and open X with pre-filled text
+                this.downloadVideo();
+                
+                const text = "DICYANIN FILTER ACTIVATED - See what others cannot. What do you see?";
+                const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(this.appUrl)}`;
+                
+                setTimeout(() => {
+                    window.open(xShareUrl, '_blank', 'width=550,height=420');
+                }, 500);
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Share error:', error);
+                this.downloadVideo();
+            }
+        }
+    }
+    
+    // ==================== SHARING ====================
+    
     shareToX() {
         const text = "See what others can't. The legendary Kilner dicyanin filter - what will you see?";
         const url = this.appUrl;
@@ -391,14 +653,8 @@ class DicyaninViewer {
         window.open(xShareUrl, '_blank', 'width=550,height=420');
     }
     
-    /**
-     * Share captured image to X
-     * Since we can't directly upload images to X via intent,
-     * we save the image and prompt user to share
-     */
     async shareImageToX() {
         try {
-            // Try Web Share API first (works on mobile)
             const blob = await new Promise(resolve => {
                 this.captureCanvas.toBlob(resolve, 'image/png');
             });
@@ -412,14 +668,12 @@ class DicyaninViewer {
                     text: 'DICYANIN FILTER ACTIVATED - See what others cannot. What do you see?'
                 });
             } else {
-                // Fallback: Download image and open X with pre-filled text
                 this.downloadImage();
                 
                 const text = "DICYANIN FILTER ACTIVATED - See what others cannot. What do you see?";
                 const url = this.appUrl;
                 const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
                 
-                // Small delay to let download start
                 setTimeout(() => {
                     window.open(xShareUrl, '_blank', 'width=550,height=420');
                 }, 500);
@@ -427,7 +681,6 @@ class DicyaninViewer {
         } catch (error) {
             if (error.name !== 'AbortError') {
                 console.error('Share error:', error);
-                // Fallback to just download
                 this.downloadImage();
             }
         }
