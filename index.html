@@ -8,10 +8,12 @@
     <meta name="theme-color" content="#0a0a1a">
     
     <!-- Social Share Meta Tags -->
-    <meta property="og:title" content="Dicyanin Viewer - See the Unseen">
-    <meta property="og:description" content="Experience the legendary Kilner screen effect. View the world through authentic dicyanin-style filters.">
+    <meta property="og:title" content="Dicyanin Viewer - See What Others Can't">
+    <meta property="og:description" content="The legendary Kilner screen filter. What will you see?">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Dicyanin Viewer - See What Others Can't">
+    <meta name="twitter:description" content="The legendary Kilner screen filter. What will you see?">
     
     <title>Dicyanin Viewer</title>
     <link rel="stylesheet" href="style.css">
@@ -21,7 +23,12 @@
         <!-- Loading Screen -->
         <div id="loading-screen">
             <div class="loader-content">
-                <div class="eye-icon">👁</div>
+                <div class="eye-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </div>
                 <h1>Dicyanin Viewer</h1>
                 <p>Initializing camera...</p>
             </div>
@@ -44,22 +51,33 @@
             <div id="controls">
                 <div class="control-group">
                     <label for="intensity">Filter Intensity</label>
-                    <input type="range" id="intensity" min="0" max="100" value="75">
-                    <span id="intensity-value">75%</span>
+                    <input type="range" id="intensity" min="0" max="100" value="85">
+                    <span id="intensity-value">85%</span>
                 </div>
                 
                 <div class="button-row">
-                    <button id="flip-btn" class="control-btn">
-                        <span class="btn-icon">🔄</span>
-                        Flip Camera
+                    <button id="flip-btn" class="control-btn" aria-label="Flip Camera">
+                        <svg class="btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"></path>
+                            <path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="m18 22-3-3 3-3"></path>
+                            <path d="m6 2 3 3-3 3"></path>
+                        </svg>
+                        <span>Flip</span>
                     </button>
-                    <button id="capture-btn" class="control-btn primary">
-                        <span class="btn-icon">📸</span>
-                        Capture
+                    <button id="capture-btn" class="control-btn primary" aria-label="Capture">
+                        <svg class="btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="6" fill="currentColor"></circle>
+                        </svg>
+                        <span>Capture</span>
                     </button>
-                    <button id="share-btn" class="control-btn">
-                        <span class="btn-icon">📤</span>
-                        Share
+                    <button id="share-btn" class="control-btn" aria-label="Share on X">
+                        <svg class="btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        <span>Share</span>
                     </button>
                 </div>
             </div>
@@ -75,20 +93,30 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Captured Image</h2>
-                    <button id="close-modal" class="close-btn">&times;</button>
+                    <button id="close-modal" class="close-btn" aria-label="Close">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <canvas id="capture-canvas"></canvas>
-                    <div class="watermark-preview">
-                        <small>Captured with Dicyanin Viewer</small>
-                    </div>
                 </div>
                 <div class="modal-actions">
                     <button id="download-btn" class="action-btn">
-                        <span>💾</span> Save Image
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Save Image
                     </button>
                     <button id="share-capture-btn" class="action-btn primary">
-                        <span>📤</span> Share
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        Share on X
                     </button>
                 </div>
             </div>
@@ -97,7 +125,13 @@
         <!-- Error Screen -->
         <div id="error-screen" class="hidden">
             <div class="error-content">
-                <div class="error-icon">📷</div>
+                <div class="error-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                        <line x1="4" y1="4" x2="20" y2="20" stroke-width="2"></line>
+                    </svg>
+                </div>
                 <h2>Camera Access Required</h2>
                 <p>Please allow camera access to use Dicyanin Viewer</p>
                 <button id="retry-btn" class="retry-btn">Try Again</button>
