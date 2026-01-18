@@ -47,6 +47,13 @@
                 </div>
             </div>
 
+            <!-- Recording Indicator -->
+            <div id="recording-indicator" class="hidden">
+                <span class="rec-dot"></span>
+                <span>REC</span>
+                <span id="recording-time">00:00.0</span>
+            </div>
+
             <!-- Controls -->
             <div id="controls">
                 <div class="control-group">
@@ -66,12 +73,19 @@
                         </svg>
                         <span>Flip</span>
                     </button>
-                    <button id="capture-btn" class="control-btn primary" aria-label="Capture">
+                    <button id="capture-btn" class="control-btn" aria-label="Capture">
                         <svg class="btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <circle cx="12" cy="12" r="6" fill="currentColor"></circle>
                         </svg>
-                        <span>Capture</span>
+                        <span>Photo</span>
+                    </button>
+                    <button id="record-btn" class="control-btn primary" aria-label="Record">
+                        <svg class="btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
+                        </svg>
+                        <span>Record</span>
                     </button>
                     <button id="share-btn" class="control-btn" aria-label="Share on X">
                         <svg class="btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -117,6 +131,40 @@
                             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                         </svg>
                         Share on X
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Preview Modal -->
+        <div id="video-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Recorded Video</h2>
+                    <button id="close-video-modal" class="close-btn" aria-label="Close">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <video id="video-preview" controls playsinline></video>
+                </div>
+                <div class="modal-actions">
+                    <button id="download-video-btn" class="action-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Save Video
+                    </button>
+                    <button id="share-video-btn" class="action-btn primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        Share
                     </button>
                 </div>
             </div>
