@@ -1,16 +1,9 @@
 # Dicyanin Viewer
 
-[![Live Demo](https://img.shields.io/badge/🔴_LIVE-Try_Now-dc2626?style=for-the-badge)](https://ghost081280.github.io/dicyanin-viewer/)
-
-![Version](https://img.shields.io/badge/version-2.0.0-8b7aff?style=flat-square)
+[![Live Site](https://img.shields.io/badge/🔴_LIVE-Try_Now-dc2626?style=for-the-badge)](https://ghost081280.github.io/dicyanin-viewer/)
 [![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
-![Mobile Ready](https://img.shields.io/badge/mobile-ready-10b981?style=flat-square)
 
 ---
-
-<p align="center">
-  <img src="https://img.shields.io/badge/👁️-DICYANIN_FILTER_ACTIVATED-4a3aff?style=for-the-badge" alt="Dicyanin Filter"/>
-</p>
 
 <p align="center">
   <strong>A web-based camera filter that replicates the optical properties of Dr. Walter Kilner's dicyanin screens from 1911.</strong><br>
@@ -254,8 +247,4 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 <p align="center">
   <strong>Built with science. Inspired by mystery.</strong>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/👁️_SEE_WHAT_OTHERS_CAN'T-4a3aff?style=for-the-badge" alt="See What Others Can't"/>
 </p>
