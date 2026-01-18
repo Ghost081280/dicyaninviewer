@@ -304,14 +304,11 @@ class DicyaninViewer {
     
     toggleFilter() {
         this.filterEnabled = !this.filterEnabled;
-        const indicator = document.getElementById('filter-off-indicator');
         const badge = this.infoBadge;
         
         if (this.filterEnabled) {
-            indicator.classList.add('hidden');
             badge.innerHTML = '<span class="badge-dot"></span>DICYANIN FILTER ACTIVE';
         } else {
-            indicator.classList.remove('hidden');
             badge.innerHTML = '<span class="badge-dot" style="background: var(--danger); box-shadow: 0 0 8px var(--danger);"></span>FILTER DISABLED';
         }
     }
