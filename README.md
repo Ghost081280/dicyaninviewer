@@ -1,6 +1,6 @@
 # Dicyanin Viewer
 
-[![Live Site](https://img.shields.io/badge/🔴_LIVE-Try_Now-dc2626?style=for-the-badge)](https://ghost081280.github.io/dicyanin-viewer/)
+[![Live Site](https://img.shields.io/badge/LIVE-Try_Now-dc2626?style=for-the-badge)](https://ghost081280.github.io/dicyanin-viewer/)
 
 ---
 
@@ -10,26 +10,26 @@
 </p>
 
 <p align="center">
-  <a href="https://ghost081280.github.io/dicyanin-viewer/"><strong>👻 Try it live →</strong></a>
+  <a href="https://ghost081280.github.io/dicyanin-viewer/"><strong>🔗 Try it live</strong></a>
 </p>
 
 ---
 
-## ✨ Features
+## Features
 
 | Feature | Description |
 |---------|-------------|
-| 🎥 **Video Recording** | Record up to 30 seconds of filtered video with watermark |
-| 📸 **Photo Capture** | Take instant photos with the filter applied |
-| 🎚️ **Adjustable Intensity** | Fine-tune the filter from subtle to full authentic darkness |
-| 🔄 **Camera Flip** | Switch between front and rear cameras |
-| 📱 **Mobile Optimized** | Works on iOS and Android with camera roll save |
-| 🐦 **Social Sharing** | Share directly to X (Twitter) and other platforms |
-| ⚡ **No Server Required** | Runs entirely in browser, works offline |
+| **Video Recording** | Record up to 30 seconds of filtered video with watermark |
+| **Photo Capture** | Take instant photos with the filter applied |
+| **Adjustable Intensity** | Fine-tune the filter from subtle to full authentic darkness |
+| **Camera Flip** | Switch between front and rear cameras |
+| **Mobile Optimized** | Works on iOS and Android with camera roll save |
+| **Social Sharing** | Share directly to X (Twitter) and other platforms |
+| **No Server Required** | Runs entirely in browser, works offline |
 
 ---
 
-## 🔬 What Are Dicyanin Goggles?
+## What Are Dicyanin Goggles?
 
 In **1911**, Dr. Walter J. Kilner, a British physician at St. Thomas Hospital in London, published *"The Human Atmosphere"* — one of the first Western medical studies proposing that the human aura could be made visible through chemical screens.
 
@@ -41,7 +41,7 @@ The goggles gained renewed internet fame due to viral claims that military pilot
 
 ---
 
-## 📜 Historical Timeline
+## Historical Timeline
 
 | Year | Event |
 |------|-------|
@@ -57,7 +57,7 @@ The goggles gained renewed internet fame due to viral claims that military pilot
 
 ---
 
-## 🔭 Our Research
+## Our Research
 
 We analyzed primary sources to replicate the **authentic spectral characteristics** of dicyanin dye:
 
@@ -69,7 +69,7 @@ We analyzed primary sources to replicate the **authentic spectral characteristic
 | **Kilner's Original Work (1911)** | "The Human Atmosphere, or The Aura Made Visible by the Aid of Chemical Screens" |
 | **Aurospecs Patent (1928)** | Harry Boddington's improvement on Kilner screens |
 
-### 🔑 Key Scientific Finding
+### Key Scientific Finding
 
 > *"Tests on the dicyanin screens show that they almost fully cut out the light in the middle of the visible spectrum, letting through only the double image of the red and blue ends of the spectrum."*
 > 
@@ -79,7 +79,7 @@ This means dicyanin does **NOT** simply block red light — it creates a **gap i
 
 ---
 
-## 🧪 The Formula
+## The Formula
 
 Based on spectral analysis of dicyanin dye, here are the transmission coefficients we implemented:
 
@@ -122,7 +122,7 @@ filteredB = ((filteredB - 128) * 1.2) + 128;
 
 ---
 
-## 👻 Why This Creates the "Aura" Effect
+## Why This Creates the "Aura" Effect
 
 The "auras" reported by Kilner and his subjects were likely caused by:
 
@@ -137,7 +137,7 @@ The British Medical Journal's 1912 review concluded that Kilner's auras were *"a
 
 ---
 
-## 📱 Usage
+## Usage
 
 ### Controls
 
@@ -159,7 +159,7 @@ The British Medical Journal's 1912 review concluded that Kilner's auras were *"a
 
 ---
 
-## 🚀 Deploy Your Own
+## Deploy Your Own
 
 ### GitHub Pages
 
@@ -182,7 +182,7 @@ python -m http.server 8000
 
 ---
 
-## 📁 File Structure
+## File Structure
 
 ```
 dicyanin-viewer/
@@ -194,7 +194,7 @@ dicyanin-viewer/
 
 ---
 
-## 🛠️ Technical Details
+## Technical Details
 
 | Technology | Usage |
 |------------|-------|
@@ -207,14 +207,41 @@ dicyanin-viewer/
 
 | Browser | Support |
 |---------|---------|
-| Chrome/Edge | ✅ Full support |
-| Safari (iOS) | ✅ Full support |
-| Firefox | ✅ Full support |
-| Samsung Internet | ✅ Full support |
+| Chrome/Edge | Full support |
+| Safari (iOS) | Full support |
+| Firefox | Full support |
+| Samsung Internet | Full support |
 
 ---
 
-## 📚 References
+## Attribution
+
+Using this code in your project? Please give credit:
+
+```
+Dicyanin Viewer by Ghost081280
+https://github.com/ghost081280/dicyanin-viewer
+```
+
+**Examples of good attribution:**
+- "Dicyanin filter based on [Dicyanin Viewer](https://github.com/ghost081280/dicyanin-viewer) by Ghost081280"
+- Credit in your app's About/Settings page
+- Comment in your source code linking back here
+
+**Not required for:**
+- Personal or private use
+- Learning and experimentation
+
+**Required for:**
+- Commercial apps and products
+- Public projects and websites
+- Redistributed code (per MIT license)
+
+We did the research so you don't have to. A link back keeps the good karma flowing.
+
+---
+
+## References
 
 1. Kilner, W.J. (1911). *The Human Atmosphere, or The Aura Made Visible by the Aid of Chemical Screens*. Rebman Company.
 
@@ -228,17 +255,17 @@ dicyanin-viewer/
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This application replicates the optical filtering properties of dicyanin dye for **entertainment and educational purposes**. We make no claims about the existence of auras, supernatural phenomena, or the ability to detect demons.
 
 The "aura" effects visible through this filter are optical artifacts produced by the unusual spectral transmission characteristics, not evidence of paranormal activity.
 
-**That said — point it at your friends and family. You might be surprised what you see.**
+That said — point it at your friends and family. You might be surprised what you see.
 
 ---
 
-## 📄 License
+## License
 
 MIT License — see [LICENSE](LICENSE) for details.
 
