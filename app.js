@@ -68,8 +68,16 @@ class DicyaninViewer {
         this.maxRecordingDuration = 30000; // 30 seconds max
         this.recordedBlob = null;
         
+        // Store blob URLs to prevent premature revocation
+        this.currentImageBlob = null;
+        this.currentVideoUrl = null;
+        
         // App URL for sharing
         this.appUrl = 'https://ghost081280.github.io/dicyanin-viewer/';
+        
+        // Detect iOS
+        this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         
         // Bind methods
         this.processFrame = this.processFrame.bind(this);
@@ -330,6 +338,11 @@ class DicyaninViewer {
         // Add watermark
         this.addWatermark();
         
+        // Generate blob immediately and store it
+        this.captureCanvas.toBlob((blob) => {
+            this.currentImageBlob = blob;
+        }, 'image/png');
+        
         // Show modal
         this.captureModal.classList.remove('hidden');
     }
@@ -399,35 +412,148 @@ class DicyaninViewer {
     
     closeModal() {
         this.captureModal.classList.add('hidden');
+        // Don't clear the blob here - keep it for potential retry
     }
     
+    /**
+     * Download image with proper iOS/Safari handling
+     */
     async downloadImage() {
         try {
-            const blob = await new Promise(resolve => {
-                this.captureCanvas.toBlob(resolve, 'image/png');
-            });
-            
-            const file = new File([blob], `dicyanin-scan-${Date.now()}.png`, { type: 'image/png' });
-            
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    files: [file]
+            // Get blob - either from stored or generate fresh
+            let blob = this.currentImageBlob;
+            if (!blob) {
+                blob = await new Promise(resolve => {
+                    this.captureCanvas.toBlob(resolve, 'image/png');
                 });
-            } else {
-                const link = document.createElement('a');
-                link.download = file.name;
-                link.href = URL.createObjectURL(blob);
-                link.click();
-                URL.revokeObjectURL(link.href);
             }
+            
+            if (!blob) {
+                this.showSaveError('Could not generate image');
+                return;
+            }
+            
+            const filename = `dicyanin-scan-${Date.now()}.png`;
+            
+            // Try Web Share API first (works best on mobile for saving to camera roll)
+            if (navigator.share && navigator.canShare) {
+                try {
+                    const file = new File([blob], filename, { type: 'image/png' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Dicyanin Scan'
+                        });
+                        return; // Success
+                    }
+                } catch (shareError) {
+                    // Share was cancelled or failed, fall through to other methods
+                    if (shareError.name === 'AbortError') {
+                        return; // User cancelled, don't show error
+                    }
+                    console.log('Share failed, trying fallback:', shareError);
+                }
+            }
+            
+            // iOS Safari fallback - open image in new tab for long-press save
+            if (this.isIOS) {
+                const url = URL.createObjectURL(blob);
+                const newTab = window.open(url, '_blank');
+                if (newTab) {
+                    // Show instruction to user
+                    setTimeout(() => {
+                        alert('Long-press the image and tap "Add to Photos" to save');
+                    }, 500);
+                } else {
+                    // Popup blocked - try inline
+                    this.showImageForSave(blob);
+                }
+                return;
+            }
+            
+            // Desktop fallback - standard download
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up after a delay
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                const link = document.createElement('a');
-                link.download = `dicyanin-scan-${Date.now()}.png`;
-                link.href = this.captureCanvas.toDataURL('image/png');
-                link.click();
-            }
+            console.error('Download error:', error);
+            this.showSaveError('Failed to save image');
         }
+    }
+    
+    /**
+     * Show image inline for manual save (iOS fallback)
+     */
+    showImageForSave(blob) {
+        const url = URL.createObjectURL(blob);
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        `;
+        
+        const instruction = document.createElement('p');
+        instruction.textContent = 'Long-press image and tap "Add to Photos"';
+        instruction.style.cssText = `
+            color: white;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        `;
+        
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.cssText = `
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 8px;
+        `;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.style.cssText = `
+            margin-top: 20px;
+            padding: 12px 32px;
+            background: #4a3aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        `;
+        closeBtn.onclick = () => {
+            document.body.removeChild(overlay);
+            URL.revokeObjectURL(url);
+        };
+        
+        overlay.appendChild(instruction);
+        overlay.appendChild(img);
+        overlay.appendChild(closeBtn);
+        document.body.appendChild(overlay);
+    }
+    
+    /**
+     * Show error message to user
+     */
+    showSaveError(message) {
+        alert(message + '. Please try again.');
     }
     
     // ==================== VIDEO RECORDING ====================
@@ -553,9 +679,14 @@ class DicyaninViewer {
         const mimeType = this.getSupportedMimeType();
         this.recordedBlob = new Blob(this.recordedChunks, { type: mimeType });
         
-        // Create video preview URL
-        const videoUrl = URL.createObjectURL(this.recordedBlob);
-        this.videoPreview.src = videoUrl;
+        // Clean up old URL if exists
+        if (this.currentVideoUrl) {
+            URL.revokeObjectURL(this.currentVideoUrl);
+        }
+        
+        // Create video preview URL and store it
+        this.currentVideoUrl = URL.createObjectURL(this.recordedBlob);
+        this.videoPreview.src = this.currentVideoUrl;
         
         // Show video modal
         this.videoModal.classList.remove('hidden');
@@ -564,51 +695,142 @@ class DicyaninViewer {
     closeVideoModal() {
         this.videoModal.classList.add('hidden');
         this.videoPreview.pause();
-        this.videoPreview.src = '';
-        
-        // Clean up blob
-        if (this.recordedBlob) {
-            URL.revokeObjectURL(this.videoPreview.src);
-        }
+        // Don't revoke URL here - keep for retry attempts
     }
     
+    /**
+     * Download video with proper iOS/Safari handling
+     */
     async downloadVideo() {
-        if (!this.recordedBlob) return;
+        if (!this.recordedBlob) {
+            this.showSaveError('No video recorded');
+            return;
+        }
         
         try {
             const extension = this.recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
-            const file = new File([this.recordedBlob], `dicyanin-scan-${Date.now()}.${extension}`, { 
-                type: this.recordedBlob.type 
-            });
+            const filename = `dicyanin-scan-${Date.now()}.${extension}`;
             
-            // On mobile, use share sheet which allows "Save Video" to camera roll
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    files: [file]
-                });
-            } else {
-                // Desktop fallback - regular download
-                const link = document.createElement('a');
-                link.download = file.name;
-                link.href = URL.createObjectURL(this.recordedBlob);
-                link.click();
-                URL.revokeObjectURL(link.href);
+            // Try Web Share API first
+            if (navigator.share && navigator.canShare) {
+                try {
+                    const file = new File([this.recordedBlob], filename, { type: this.recordedBlob.type });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Dicyanin Scan'
+                        });
+                        return; // Success
+                    }
+                } catch (shareError) {
+                    if (shareError.name === 'AbortError') {
+                        return; // User cancelled
+                    }
+                    console.log('Share failed, trying fallback:', shareError);
+                }
             }
+            
+            // iOS Safari - videos are tricky, open in new tab
+            if (this.isIOS) {
+                const url = URL.createObjectURL(this.recordedBlob);
+                const newTab = window.open(url, '_blank');
+                if (newTab) {
+                    setTimeout(() => {
+                        alert('Tap the share button in Safari, then "Save Video" to save to camera roll');
+                    }, 500);
+                } else {
+                    // Provide direct link
+                    this.showVideoForSave();
+                }
+                return;
+            }
+            
+            // Desktop fallback
+            const url = URL.createObjectURL(this.recordedBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                // Final fallback
-                const extension = this.recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
-                const link = document.createElement('a');
-                link.download = `dicyanin-scan-${Date.now()}.${extension}`;
-                link.href = URL.createObjectURL(this.recordedBlob);
-                link.click();
-                URL.revokeObjectURL(link.href);
-            }
+            console.error('Download error:', error);
+            this.showSaveError('Failed to save video');
         }
     }
     
+    /**
+     * Show video inline for manual save (iOS fallback)
+     */
+    showVideoForSave() {
+        const url = URL.createObjectURL(this.recordedBlob);
+        
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        `;
+        
+        const instruction = document.createElement('p');
+        instruction.textContent = 'Tap video to play, then use browser share to save';
+        instruction.style.cssText = `
+            color: white;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        `;
+        
+        const video = document.createElement('video');
+        video.src = url;
+        video.controls = true;
+        video.playsInline = true;
+        video.style.cssText = `
+            max-width: 90%;
+            max-height: 60vh;
+            border-radius: 8px;
+        `;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.style.cssText = `
+            margin-top: 20px;
+            padding: 12px 32px;
+            background: #4a3aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        `;
+        closeBtn.onclick = () => {
+            document.body.removeChild(overlay);
+            URL.revokeObjectURL(url);
+        };
+        
+        overlay.appendChild(instruction);
+        overlay.appendChild(video);
+        overlay.appendChild(closeBtn);
+        document.body.appendChild(overlay);
+    }
+    
+    /**
+     * Share video
+     */
     async shareVideo() {
-        if (!this.recordedBlob) return;
+        if (!this.recordedBlob) {
+            this.showSaveError('No video recorded');
+            return;
+        }
         
         try {
             const extension = this.recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
@@ -616,7 +838,7 @@ class DicyaninViewer {
                 type: this.recordedBlob.type 
             });
             
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     files: [file],
                     title: 'Dicyanin Filter Scan',
@@ -624,7 +846,7 @@ class DicyaninViewer {
                 });
             } else {
                 // Fallback: Download video and open X with pre-filled text
-                this.downloadVideo();
+                await this.downloadVideo();
                 
                 const text = "DICYANIN FILTER ACTIVATED - See what others cannot. What do you see?";
                 const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(this.appUrl)}`;
@@ -636,7 +858,10 @@ class DicyaninViewer {
         } catch (error) {
             if (error.name !== 'AbortError') {
                 console.error('Share error:', error);
-                this.downloadVideo();
+                // Still try to help user share
+                const text = "DICYANIN FILTER ACTIVATED - See what others cannot. What do you see?";
+                const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(this.appUrl)}`;
+                window.open(xShareUrl, '_blank', 'width=550,height=420');
             }
         }
     }
@@ -652,24 +877,33 @@ class DicyaninViewer {
     
     async shareImageToX() {
         try {
-            const blob = await new Promise(resolve => {
-                this.captureCanvas.toBlob(resolve, 'image/png');
-            });
+            // Get blob
+            let blob = this.currentImageBlob;
+            if (!blob) {
+                blob = await new Promise(resolve => {
+                    this.captureCanvas.toBlob(resolve, 'image/png');
+                });
+            }
+            
+            if (!blob) {
+                this.shareToX(); // Fallback to just sharing link
+                return;
+            }
             
             const file = new File([blob], 'dicyanin-scan.png', { type: 'image/png' });
             
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     files: [file],
                     title: 'Dicyanin Filter Scan',
                     text: 'DICYANIN FILTER ACTIVATED - See what others cannot. What do you see?'
                 });
             } else {
-                this.downloadImage();
+                // Download image first, then open X
+                await this.downloadImage();
                 
                 const text = "DICYANIN FILTER ACTIVATED - See what others cannot. What do you see?";
-                const url = this.appUrl;
-                const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+                const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(this.appUrl)}`;
                 
                 setTimeout(() => {
                     window.open(xShareUrl, '_blank', 'width=550,height=420');
@@ -678,7 +912,8 @@ class DicyaninViewer {
         } catch (error) {
             if (error.name !== 'AbortError') {
                 console.error('Share error:', error);
-                this.downloadImage();
+                // Fallback to just X share
+                this.shareToX();
             }
         }
     }
