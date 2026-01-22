@@ -551,3 +551,72 @@ html, body {
         height: 20px;
     }
 }
+
+/* ========================================
+   Toast Notification Styles
+   ======================================== */
+
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    padding: 14px 24px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--success);
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.toast-message {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+@media (max-width: 400px) {
+    .toast {
+        bottom: 80px;
+        padding: 12px 20px;
+        gap: 10px;
+    }
+    
+    .toast-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+    
+    .toast-message {
+        font-size: 13px;
+    }
+}
